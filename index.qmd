@@ -1,0 +1,161 @@
+---
+title: "Tarea 4 Procesa"
+author: "Alex Fernández"
+format: html
+toc: true
+lang: es
+theme: yeti
+---
+
+## Carga Biliotecas
+
+```{r}
+#| label: carga-bibliotecas
+#| warning: false
+#| message: false
+#| code-fold: true
+
+library(tidyverse)
+library(scales)
+library(ggthemes)
+library(hrbrthemes)
+library(plotly)
+library(ggplot2)
+library(DT)
+library(tmap)
+library(sf)
+```
+
+
+## Carga de datos
+
+```{r}
+#| label: carga-datos
+#| warning: false
+#| message: false
+#| code-fold: true
+
+paises <- read_csv(
+  "All Countries.csv"
+  )
+limite_paises <- st_read("Mundo_limite_provincia.gpkg",
+                           options = c(
+    "X_POSSIBLE_NAMES=decimalLongitude", # columna de longitud decimal
+    "Y_POSSIBLE_NAMES=decimalLatitude"   # columna de latitud decimal
+  ),
+  quiet = TRUE
+  )
+```
+
+## Tabla interactiva
+
+```{r}
+#| label: tabla-interactiva
+#| warning: false
+#| message: false
+#| code-fold: true
+
+paises |> datatable(
+  options = list(
+    pageLength = 5,
+    language = list(url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/Spanish.json')
+  )
+)
+```
+
+
+## Gráfico de dispersión de la inversión en salud reflejada en las camas en los hospitales por cada 1000 habitantes
+
+```{r}
+#| label: relacion-salud-camas
+#| warning: false
+#| message: false
+#| code-fold: true
+
+grafico_ggplot2 <-
+paises |>
+  ggplot(aes(x = health_expenditure_capita, y = hospital_beds, color = continent)) +
+  geom_point(aes(
+    text = paste0(
+      "Inversión en salud:", health_expenditure_capita, "\n",
+      "Camas de hospital:", hospital_beds, "\n",
+      "País:", country
+    )
+  )) +
+  scale_x_continuous(labels = comma, limits = c(0, NA)) +
+  ggtitle("Inversión en salud per cápita vs camas de hospital") +
+  xlab("Inversión en salud per cápita (USD)") +
+  ylab("Camas de hospital por 1000 habitantes") +
+  labs(
+    color = "Continente",
+    subtitle = "Datos de todo el mundo",
+    caption = "Fuentes: Naciones Unidas y Banco Mundial"
+  ) +
+  theme_solarized()
+
+ggplotly(grafico_ggplot2, tooltip = "text") |> 
+  config(locale = 'es')
+```
+
+## Gráfico de dispersión del consumo de energías renobables contra la emisión de CO2
+
+```{r}
+#| label: relacion-renovables_co2
+#| warning: false
+#| message: false
+#| code-fold: true
+
+grafico_renovables_co2 <-
+paises |>
+  ggplot(aes(x = renewable_energy_consumption_pct, y = co2_emissions, color = continent)) +
+  geom_point(aes(
+    text = paste0(
+      "Consumo de energías renovables:", renewable_energy_consumption_pct, "\n",
+      "Emisiones de CO2:", co2_emissions, "\n",
+      "País:", country
+    )
+  )) +
+  scale_x_continuous(labels = comma, limits = c(0, NA)) +
+  ggtitle("Consumo de energías renovables traducidas en emisiones de co2") +
+  xlab("Consumo E. renovables (%)") +
+  ylab("Emisiones de CO2") +
+  labs(
+    color = "Continente",
+    subtitle = "Datos de todo el mundo",
+    caption = "Fuentes: Naciones Unidas y Banco Mundial"
+  ) +
+  theme_solarized()
+
+ggplotly(grafico_renovables_co2, tooltip = "text") |> 
+  config(locale = 'es')
+```
+
+## Mapa interactivo
+
+```{r}
+
+tmap_mode("view")
+
+
+mapa_PIB_per_capita <-
+  tm_basemap("OpenStreetMap")
+  tm_shape(World) +
+  tm_polygons(
+    fill = "gdp_cap_est",
+    fill.scale = tm_scale_intervals( 
+      style  = "quantile",
+      values = "brewer.yl_or_rd"   
+    ),
+    fill.legend = tm_legend(title = "PIB per cápita"), 
+
+    
+    id = "name", 
+    popup.vars  = c( 
+      "Área" = "area",
+      "Población" = "pop_est",
+      "PIB per cápita" = "gdp_cap_est"
+    )
+  )
+
+```
+
