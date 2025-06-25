@@ -38,13 +38,6 @@ library(sf)
 paises <- read_csv(
   "All Countries.csv"
   )
-limite_paises <- st_read("Mundo_limite_provincia.gpkg",
-                           options = c(
-    "X_POSSIBLE_NAMES=decimalLongitude", # columna de longitud decimal
-    "Y_POSSIBLE_NAMES=decimalLatitude"   # columna de latitud decimal
-  ),
-  quiet = TRUE
-  )
 ```
 
 ## Tabla interactiva
@@ -133,7 +126,11 @@ ggplotly(grafico_renovables_co2, tooltip = "text") |>
 ## Mapa interactivo
 
 ```{r}
-
+#| label: mapa-interactivo
+#| warning: false
+#| message: false
+#| code-fold: true
+#| 
 tmap_mode("view")
 
 
